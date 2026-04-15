@@ -74,7 +74,7 @@ python val.py --weights runs/train/my_exp/weights/best.pt --data path/to/data.ya
 
 ## MEG (diffusion preprocessing)
 
-### Recommended open checkpoints (paper-aligned SD1.5 + Canny ControlNet)
+### Recommended open checkpoints (SD1.5 + Canny ControlNet)
 
 Download once (or let `huggingface_hub` cache on first run):
 
@@ -135,9 +135,8 @@ Then pass `--pipeline_dir path/to/sd15_canny_img2img_pipeline` to `MEG/batch_inf
 | YAML | Purpose |
 |------|---------|
 | `ultralytics/cfg/models/rt-detr/rtdetr-r18.yaml` | **SRFD-style** dual branch at P5 + domain classifier + orthogonality loss in graph |
-| `ultralytics/cfg/models/rt-detr/rtdetr-r18-scale-embed.yaml` | **Baseline:** explicit scale embedding instead of disentanglement |
 
-Detection loss weights for domain / disentanglement are wired in code (`ultralytics/models/utils/loss.py`, `lambda_disentangle` in yaml where applicable). Tune to match your paper settings.
+Detection loss weights for domain / disentanglement are wired in code (`ultralytics/models/utils/loss.py`, `lambda_disentangle` in yaml where applicable).
 
 ---
 
@@ -145,7 +144,6 @@ Detection loss weights for domain / disentanglement are wired in code (`ultralyt
 
 - Standard Ultralytics/YOLO detection layout: images + labels, `data.yaml` with `train`, `val`, `names`, `nc`, etc.
 - **Domain supervision:** `ultralytics/data/dataset.py` assigns `domain` from image file path (`nm` → 0, `μm` / `um` style patterns → 1, else -1). Adjust naming conventions or code if your folder scheme differs.
-- The `dataset/` folder may be empty in public releases; **provide your own `data.yaml`** or a small public toy example for smoke tests.
 
 ---
 
@@ -153,36 +151,3 @@ Detection loss weights for domain / disentanglement are wired in code (`ultralyt
 
 See **`notebooks/SRFD-DETR_workflow.ipynb`** for a step-by-step outline: install → (optional) clone repo → Hugging Face auth → MEG inference → detector train/val commands.
 
-For strict reproducibility, pin package versions in a separate `requirements-locked.txt` after you validate one environment.
-
----
-
-## Implementation notes (paper ↔ code)
-
-Worth stating in a paper supplement or README for reviewers:
-
-- MEG **inference** uses adaptive Canny for structural maps and DDIM-style scheduling as in `MEG/batch_infer.py`; **training** uses fixed Canny thresholds in places — align with the paper text if you claim identical thresholds everywhere.
-- SRFD graph uses **two parallel deep stages** at P5 in yaml (not only two 1×1 conv heads); describe as “parallel streams” in documentation if wording in the paper says “lightweight heads.”
-- Optional: add `L2` regularizer on ControlNet branch parameters in training if you cite a dedicated regularization term.
-
----
-
-## Citation
-
-If you use this repository academically, cite your SRFD-DETR paper and the upstream projects (Ultralytics, Stable Diffusion, ControlNet) as appropriate.
-
----
-
-## Contact
-
-(Add your email or issue tracker for the public release.)
-
----
-
-## Open-source checklist (maintainer)
-
-- [ ] No private absolute paths in **your** scripts (`train.py`, `val.py`, `MEG/*.py` — done in this repo snapshot).
-- [ ] Dataset: either omit or ship only **format docs** / toy samples; confirm ethics & data agreement.
-- [ ] Third-party weights: document SD1.5 + ControlNet URLs and licenses; do not commit large binaries to git.
-- [ ] License file: keep upstream **AGPL-3.0** notice with Ultralytics; add your paper/repo citation if desired.
-- [ ] Run one smoke test: `python train.py --help`, `python val.py --help`, `python MEG/batch_infer.py --help`.
